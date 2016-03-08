@@ -35,6 +35,7 @@ testScripts=(
     'walletbackup.py'
     'nodehandling.py'
     'reindex.py'
+    'addressindex.py'
     'decodescript.py'
     'disablewallet.py'
     'zcjoinsplit.py'
