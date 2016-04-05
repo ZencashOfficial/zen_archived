@@ -292,6 +292,7 @@ static const CRPCCommand vRPCCommands[] =
     { "blockchain",         "verifytxoutproof",       &verifytxoutproof,       true  },
     { "blockchain",         "gettxoutsetinfo",        &gettxoutsetinfo,        true  },
     { "blockchain",         "verifychain",            &verifychain,            true  },
+    { "blockchain",         "getspentinfo",           &getspentinfo,           true  },
 
     /* Mining */
 #ifdef ENABLE_WALLET
