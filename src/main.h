@@ -300,6 +300,9 @@ struct CSpentIndexValue {
     uint256 txid;
     unsigned int inputIndex;
     int blockHeight;
+    CAmount satoshis;
+    int addressType;
+    uint160 addressHash;
 
     ADD_SERIALIZE_METHODS;
 
@@ -308,12 +311,18 @@ struct CSpentIndexValue {
         READWRITE(txid);
         READWRITE(inputIndex);
         READWRITE(blockHeight);
+        READWRITE(satoshis);
+        READWRITE(addressType);
+        READWRITE(addressHash);
     }
 
-    CSpentIndexValue(uint256 t, unsigned int i, int h) {
+    CSpentIndexValue(uint256 t, unsigned int i, int h, CAmount s, int type, uint160 a) {
         txid = t;
         inputIndex = i;
         blockHeight = h;
+        satoshis = s;
+        addressType = type;
+        addressHash = a;
     }
 
     CSpentIndexValue() {
@@ -324,6 +333,9 @@ struct CSpentIndexValue {
         txid.SetNull();
         inputIndex = 0;
         blockHeight = 0;
+        satoshis = 0;
+        addressType = 0;
+        addressHash.SetNull();
     }
 
     bool IsNull() const {
