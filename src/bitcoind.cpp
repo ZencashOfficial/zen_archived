@@ -102,23 +102,43 @@ bool AppInit(int argc, char* argv[])
         {
             ReadConfigFile(mapArgs, mapMultiArgs);
         } catch (const missing_zcash_conf& e) {
-            fprintf(stderr,
-                (_("Before starting zend, you need to create a configuration file:\n"
-                   "%s\n"
-                   "It can be completely empty! That indicates you are happy with the default\n"
-                   "configuration of zend. But requiring a configuration file to start ensures\n"
-                   "that zend won't accidentally compromise your privacy if there was a default\n"
-                   "option you needed to change.\n"
-                   "\n"
-                   "You can look at the example configuration file for suggestions of default\n"
-                   "options that you may want to change. It should be in one of these locations,\n"
-                   "depending on how you installed Zen:\n") +
-                 _("- Source code:  %s\n"
-                   "- .deb package: %s\n")).c_str(),
-                GetConfigFile().string().c_str(),
-                "contrib/DEBIAN/examples/zen.conf",
-                "/usr/share/doc/zen/examples/zen.conf");
-            return false;
+            //fprintf(stderr,
+            //    (_("Before starting zend, you need to create a configuration file:\n"
+            //       "%s\n"
+            //       "It can be completely empty! That indicates you are happy with the default\n"
+            //       "configuration of zend. But requiring a configuration file to start ensures\n"
+            //       "that zend won't accidentally compromise your privacy if there was a default\n"
+            //       "option you needed to change.\n"
+            //       "\n"
+            //       "You can look at the example configuration file for suggestions of default\n"
+            //       "options that you may want to change. It should be in one of these locations,\n"
+            //       "depending on how you installed Zen:\n") +
+            //     _("- Source code:  %s\n"
+            //       "- .deb package: %s\n")).c_str(),
+            //    GetConfigFile().string().c_str(),
+            //    "contrib/DEBIAN/examples/zen.conf",
+            //    "/usr/share/doc/zen/examples/zen.conf");
+            //return false;
+
+            // Warn user about using default config file
+            try
+            {
+                fprintf(stdout,
+                    "------------------------------------------------------------------"
+                    "WARNING: Copying the default config file to ~/.zen/zen.conf.\n"
+                    "This is a potential risk, as zend might accidentally compramize\n"
+                    "your privacy if there is a default option that you need to change!"
+                    "------------------------------------------------------------------");
+                // Copy default config file     
+                std::ifstream src("contrib/debian/examples/zen.conf", std::ios::binary);
+                std::ofstream dst("", std""ios""binary);
+                dst << src.rdbuf();
+                return true;
+            } catch (const std::exception& e) {
+                fprintf(stderr, "Error copying configuration file: %s\n", e.what());
+                return false;
+            }
+            
         } catch (const std::exception& e) {
             fprintf(stderr,"Error reading configuration file: %s\n", e.what());
             return false;
