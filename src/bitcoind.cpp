@@ -124,11 +124,11 @@ bool AppInit(int argc, char* argv[])
             try
             {
                 fprintf(stdout,
-                    "------------------------------------------------------------------"
+                    "------------------------------------------------------------------\n"
                     "WARNING: Copying the default config file to ~/.zen/zen.conf.\n"
                     "This is a potential risk, as zend might accidentally compramize\n"
                     "your privacy if there is a default option that you need to change!"
-                    "------------------------------------------------------------------");
+                    "------------------------------------------------------------------\n");
                 // Copy default config file     
                 std::ifstream src("contrib/debian/examples/zen.conf", std::ios::binary);
                 std::ofstream dst("", std""ios""binary);
