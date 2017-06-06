@@ -131,7 +131,7 @@ bool AppInit(int argc, char* argv[])
                     "------------------------------------------------------------------\n");
                 // Copy default config file     
                 std::ifstream src("contrib/debian/examples/zen.conf", std::ios::binary);
-                std::ofstream dst("", std::ios::binary);
+                std::ofstream dst(GetConfigFile(), std::ios::binary);
                 dst << src.rdbuf();
                 return true;
             } catch (const std::exception& e) {
