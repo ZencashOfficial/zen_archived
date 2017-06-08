@@ -125,16 +125,19 @@ bool AppInit(int argc, char* argv[])
             {
                 fprintf(stdout,
                     "------------------------------------------------------------------\n"
-                    "WARNING: Copying the default config file to ~/.zen/zen.conf.\n"
+                    "                        WARNING:\n"
+                    "Automatically copying the default config file to ~/.zen/zen.conf.\n"
                     "This is a potential risk, as zend might accidentally compramize\n"
                     "your privacy if there is a default option that you need to change!\n"
-
+                    "\n"
+                    "           Please restart zend to continue.\n"
+                    "           You will not see this warning again.\n"
                     "------------------------------------------------------------------\n");
                 // Copy default config file     
                 std::ifstream src("contrib/debian/examples/zen.conf", std::ios::binary);
                 std::ofstream dst(GetConfigFile().string().c_str(), std::ios::binary);
                 dst << src.rdbuf();
-                return true;
+                return false;
             } catch (const std::exception& e) {
                 fprintf(stderr, "Error copying configuration file: %s\n", e.what());
                 return false;
