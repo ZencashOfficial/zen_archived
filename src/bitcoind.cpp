@@ -102,9 +102,9 @@ bool AppInit(int argc, char* argv[])
         {
             ReadConfigFile(mapArgs, mapMultiArgs);
         } catch (const missing_zcash_conf& e) {
-            // Warn user about using default config file
             try
             {
+                // Warn user about using default config file
                 fprintf(stdout,
                     "------------------------------------------------------------------\n"
                     "                        WARNING:\n"
