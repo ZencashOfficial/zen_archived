@@ -878,7 +878,7 @@ bool CheckTransactionWithoutProofVerification(const CTransaction& tx, CValidatio
     txnouttype whichType;
     
     if ((whichType != TX_PUBKEY_REPLAY && whichType != TX_PUBKEYHASH_REPLAY && whichType != TX_MULTISIG_REPLAY) &&
-         nHeight > 115004 && !tx.IsCoinBase()) {    //115004 was the first replay attack transaction and we're 233 confirms (1497026254) after that
+         nHeight > 117000 && !tx.IsCoinBase() && tx.nVersion != 2) { 
         return state.DoS(100, error("CheckTransaction(): op-checkblockatheight-needed"),
                          REJECT_INVALID, "op-checkblockatheight-needed");
     }
