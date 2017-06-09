@@ -255,7 +255,6 @@ public:
         vSeeds.clear();
         vSeeds.push_back(CDNSSeedData("zencash.io", "testnet-zen.zencash.io"));
         vSeeds.push_back(CDNSSeedData("zdeveloper.org", "testnet-zen.zdeveloper.org"));
-        vSeeds.push_back(CDNSSeedData("rotorproject.org", "testnet-zen.rotorproject.org"));
 
         // guarantees the first 2 characters, when base58 encoded, are "zt"
         // guarantees the first 2 characters, when base58 encoded, are "tm"
