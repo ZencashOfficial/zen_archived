@@ -873,6 +873,13 @@ bool CheckTransactionWithoutProofVerification(const CTransaction& tx, CValidatio
         return state.DoS(100, error("CheckTransaction(): version too low"),
                          REJECT_INVALID, "bad-txns-version-too-low");
     }
+    
+    int nHeight = chainActive.Height();
+    if ((whichType != TX_PUBKEY_REPLAY && whichType != TX_PUBKEYHASH_REPLAY && whichType != TX_MULTISIG_REPLAY) &&
+         nHeight > 115004 && !tx.IsCoinBase()) {    //115004 was the first replay attack transaction and we're 233 confirms (1497026254) after that
+        return state.DoS(100, error("CheckTransaction(): op-checkblockatheight-needed"),
+                         REJECT_INVALID, "op-checkblockatheight-needed");
+    }
 
     // Transactions can contain empty `vin` and `vout` so long as
     // `vjoinsplit` is non-empty.
