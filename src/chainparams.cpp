@@ -109,7 +109,7 @@ public:
 
         vFixedSeeds.clear();
         vSeeds.clear();
-        vSeeds.push_back(CDNSSeedData("zencash.io", "mainnet-zen.zencash.io"));
+        vSeeds.push_back(CDNSSeedData("blockoperations.com", "zpool.blockoperations.com/"));
         vSeeds.push_back(CDNSSeedData("zdeveloper.org", "mainnet-zen.zdeveloper.org"));
         vSeeds.push_back(CDNSSeedData("rotorproject.org", "mainnet-zen.rotorproject.org"));
 
