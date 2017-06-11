@@ -910,12 +910,6 @@ bool CheckTransactionWithoutProofVerification(const CTransaction& tx, CValidatio
                              REJECT_INVALID, "op-checkblockatheight-needed");
         }
         
-        if ((whichType != TX_PUBKEY_REPLAY && whichType != TX_PUBKEYHASH_REPLAY && whichType != TX_MULTISIG_REPLAY) &&
-            nHeight > 117000 && !tx.IsCoinBase()) {
-            return state.DoS(100, error("CheckTransaction(): op-checkblockatheight-needed"),
-                             REJECT_INVALID, "op-checkblockatheight-needed");
-        }
-        
         if (txout.nValue < 0)
             return state.DoS(100, error("CheckTransaction(): txout.nValue negative"),
                              REJECT_INVALID, "bad-txns-vout-negative");
