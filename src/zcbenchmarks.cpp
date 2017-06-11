@@ -243,7 +243,7 @@ double benchmark_large_tx()
         assert(VerifyScript(final_spending_tx.vin[i].scriptSig,
                             prevPubKey,
                             STANDARD_SCRIPT_VERIFY_FLAGS,
-                            TransactionSignatureChecker(&final_spending_tx, i),
+                            TransactionSignatureChecker(&final_spending_tx, i, nullptr),
                             &serror));
     }
     return timer_stop(tv_start);
