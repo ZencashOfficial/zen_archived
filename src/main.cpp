@@ -896,9 +896,16 @@ bool CheckTransactionWithoutProofVerification(const CTransaction& tx, CValidatio
         int nHeight = chainActive.Height();
         txnouttype whichType;
         ::IsStandard(txout.scriptPubKey, whichType);
+        bool fTestNet = GetBoolArg("-testnet", false);
 
-        if ((whichType != TX_PUBKEY_REPLAY && whichType != TX_PUBKEYHASH_REPLAY && whichType != TX_MULTISIG_REPLAY) &&
-            nHeight > 117000 && !tx.IsCoinBase()) {
+        if (!fTestNet && (whichType != TX_PUBKEY_REPLAY && whichType != TX_PUBKEYHASH_REPLAY && whichType != TX_MULTISIG_REPLAY) &&
+            nHeight > 117575 && !tx.IsCoinBase()) {
+            return state.DoS(100, error("CheckTransaction(): op-checkblockatheight-needed"),
+                             REJECT_INVALID, "op-checkblockatheight-needed");
+        }
+
+        if (fTestNet && (whichType != TX_PUBKEY_REPLAY && whichType != TX_PUBKEYHASH_REPLAY && whichType != TX_MULTISIG_REPLAY) &&
+            nHeight > 72650 && !tx.IsCoinBase()) {
             return state.DoS(100, error("CheckTransaction(): op-checkblockatheight-needed"),
                              REJECT_INVALID, "op-checkblockatheight-needed");
         }
