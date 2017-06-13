@@ -425,6 +425,13 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                         if (flags & SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS) {
                             return set_error(serror, SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS);
                         }
+                        // At least check that there are 2 parameters
+                        if (stack.size() < 2) {
+                            return set_error(serror, SCRIPT_ERR_INVALID_STACK_OPERATION);
+                        }
+                        // Clear stack
+                        popstack(stack);
+                        popstack(stack);
                         break;
                     }
 
@@ -443,6 +450,10 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                         // Also because it will *eventually* become final when the height gets old enough
                         return set_error(serror, SCRIPT_ERR_NOT_FINAL);
                     }
+
+                    // Clear stack
+                    popstack(stack);
+                    popstack(stack);
 
                     break;
                 }
