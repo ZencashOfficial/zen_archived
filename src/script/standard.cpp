@@ -160,6 +160,34 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
                 if (vch1.size() > nMaxDatacarrierBytes)
                     break;
             }
+            else if (opcode2 == OP_CHECKBLOCKATHEIGHT)
+            {
+#if !defined(BITCOIN_TX) // TODO: This is an workaround. zen-tx does not have access to chain state so no replay protection is possible
+                opcodetype opcode;
+                vector<unsigned char> vchBlockHash;
+                vector<unsigned char> vchBlockHeight;
+                CScript::const_iterator pcBlockHash = pc1 - 2;
+                CScript::const_iterator pcBlockHeight = pc1 - 1;
+
+                if(!script1.GetOp(pcBlockHash, opcode, vchBlockHash))
+                    break;
+                if(!script1.GetOp(pcBlockHeight, opcode, vchBlockHeight))
+                    break;
+
+                const int32_t nHeight = CScriptNum(vchBlockHeight, true, 4).getint();
+                CBlockIndex* pblockindex = chainActive[nHeight];
+
+                vector<unsigned char> vchCompareTo(pblockindex->GetBlockHash().begin(), pblockindex->GetBlockHash().end());
+                vchCompareTo.erase(vchCompareTo.begin(), vchCompareTo.end() - vchBlockHash.size());
+
+                if (vchCompareTo != vchBlockHash)
+                    break;
+#endif
+                if (opcode1 != opcode2 || vch1 != vch2)
+                {
+                    break;
+                }
+            }
             else if (opcode1 != opcode2 || vch1 != vch2)
             {
                 // Others must match exactly
