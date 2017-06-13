@@ -82,6 +82,9 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
         return true;
     }
 
+    // OP_CHECKBLOCKATHEIGHT parameters
+    vector<unsigned char> vchBlockHash, vchBlockHeight;
+
     // Scan templates
     const CScript& script1 = scriptPubKey;
     BOOST_FOREACH(const PAIRTYPE(txnouttype, CScript)& tplate, mTemplates)
@@ -156,32 +159,39 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
             }
             else if (opcode2 == OP_SMALLDATA)
             {
+            	// Possible values of OP_CHECKBLOCKATHEIGHT parameters
+            	if (vch1.size() == 2)
+					vchBlockHeight = vch1;
+				else
+					vchBlockHash = vch1;
+
                 // small pushdata, <= nMaxDatacarrierBytes
                 if (vch1.size() > nMaxDatacarrierBytes)
                     break;
             }
             else if (opcode2 == OP_CHECKBLOCKATHEIGHT)
             {
-#if !defined(BITCOIN_TX) // TODO: This is an workaround. zen-tx does not have access to chain state so no replay protection is possible
-                opcodetype opcode;
-                vector<unsigned char> vchBlockHash;
-                vector<unsigned char> vchBlockHeight;
-                CScript::const_iterator pcBlockHash = pc1 - 2;
-                CScript::const_iterator pcBlockHeight = pc1 - 1;
+            	// Full-fledged implementation of the OP_CHECKBLOCKATHEIGHT opcode for verification of vout's
 
-                if(!script1.GetOp(pcBlockHash, opcode, vchBlockHash))
-                    break;
-                if(!script1.GetOp(pcBlockHeight, opcode, vchBlockHeight))
-                    break;
+#if !defined(BITCOIN_TX) // TODO: This is an workaround. zen-tx does not have access to chain state so no replay protection is possible
 
                 const int32_t nHeight = CScriptNum(vchBlockHeight, true, 4).getint();
-                CBlockIndex* pblockindex = chainActive[nHeight];
 
-                vector<unsigned char> vchCompareTo(pblockindex->GetBlockHash().begin(), pblockindex->GetBlockHash().end());
-                vchCompareTo.erase(vchCompareTo.begin(), vchCompareTo.end() - vchBlockHash.size());
+                // If the chain doesn't reach the desired height yet, the transaction is non-final
+                if (nHeight > chainActive.Height())
+                	break;
 
-                if (vchCompareTo != vchBlockHash)
-                    break;
+                // According to BIP115, sufficiently old blocks are always valid, so check only blocks of depth less than 52596
+                if (nHeight > (chainActive.Height() - 52596))
+                {
+					CBlockIndex* pblockindex = chainActive[nHeight];
+
+					vector<unsigned char> vchCompareTo(pblockindex->GetBlockHash().begin(), pblockindex->GetBlockHash().end());
+					vchCompareTo.erase(vchCompareTo.begin(), vchCompareTo.end() - vchBlockHash.size());
+
+					if (vchCompareTo != vchBlockHash)
+						break;
+                }
 #endif
                 if (opcode1 != opcode2 || vch1 != vch2)
                 {
