@@ -2172,6 +2172,11 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
         flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
     }
 
+    // Start enforcing CHECKBLOCKATHEIGHT for block.nVersion=4
+    if (block.nVersion >= 4) {
+        flags |= SCRIPT_VERIFY_CHECKBLOCKATHEIGHT;
+    }
+
     CBlockUndo blockundo;
 
     CCheckQueueControl<CScriptCheck> control(fExpensiveChecks && nScriptCheckThreads ? &scriptcheckqueue : NULL);
