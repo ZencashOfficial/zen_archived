@@ -160,7 +160,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
             else if (opcode2 == OP_SMALLDATA)
             {
             	// Possible values of OP_CHECKBLOCKATHEIGHT parameters
-            	if (vch1.size() < 4)
+            	if (vch1.size() <= sizeof(int))
 					vchBlockHeight = vch1;
 				else
 					vchBlockHash = vch1;
@@ -175,12 +175,17 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
 
 #if !defined(BITCOIN_TX) // TODO: This is an workaround. zen-tx does not have access to chain state so no replay protection is possible
 
-                const int32_t nHeight = CScriptNum(vchBlockHeight, true, 4).getint();
-
-                // If the chain doesn't reach the desired height yet, the transaction is non-final
-                if (nHeight > chainActive.Height())
+                if (vchBlockHeight.size() == 0 || vchBlockHash.size() == 0)
                 {
-                    LogPrintf("%s: %s: OP_CHECKBLOCKATHEIGHT verification failed. vout block height %d is ahead of chainActive", __FILE__, __func__, nHeight);
+                    LogPrintf("%s: %s: OP_CHECKBLOCKATHEIGHT verification failed. Bad params.", __FILE__, __func__);
+                    break;
+                }
+
+                const int32_t nHeight = CScriptNum(vchBlockHeight, true, sizeof(int)).getint();
+
+                if (nHeight < 0 || nHeight > chainActive.Height())
+                {
+                    LogPrintf("%s: %s: OP_CHECKBLOCKATHEIGHT verification failed. Transaction is non-final. Referenced height: %d", __FILE__, __func__, nHeight);
                     break;
                 }
 

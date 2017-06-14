@@ -194,41 +194,6 @@ bool static IsDefinedHashtypeSignature(const valtype &vchSig) {
     return true;
 }
 
-// Generic anti-replay protection using Script
-bool CheckBlockIndex(int &txBlockIndex, int blockIndex)
-{
-    // checks for relative txBlockIndex
-    if (txBlockIndex < 0)
-    	return false;
-    // checks for absolute blockIndex
-    else if (txBlockIndex >= 0) {
-        int blockDelta = txBlockIndex - blockIndex;
-        // blockDelta must be negative
-        if (blockDelta > 0)
-            return false;
-        // blockDelta must be greater than 100 but lesser than 262144
-        if ((blockDelta > -101) || (blockDelta < -262144) && (blockDelta != 0))
-            return false;
-        // check if txBlockIndex refers to an actual block
-        if (txBlockIndex > blockIndex)
-            return false;
-        return true;
-    }
-
-    return false;
-}
-
-// Generic anti-replay protection using Script
-bool CheckBlockHash(uint256 &txBlockHash, uint256 &blockHash)
-{
-    // OP_CHECKBLOCKATHEIGHT matches active chain
-    if (txBlockHash == blockHash)
-        return true;
-
-    LogPrintf("%s: %s: OP_CHECKBLOCKATHEIGHT verification failed. Parameters don't match active chain.", __FILE__, __func__);
-    return false;
-}
-
 bool static CheckSignatureEncoding(const valtype &vchSig, unsigned int flags, ScriptError* serror) {
     // Empty signature. Not strictly DER encoded, but allowed to provide a
     // compact way to provide an invalid signature for use with CHECK(MULTI)SIG
@@ -439,15 +404,23 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                         return set_error(serror, SCRIPT_ERR_INVALID_STACK_OPERATION);
                     }
 
-                    // nHeight is a 32-bit signed integer field.
-                    const int32_t nHeight = CScriptNum(stacktop(-1), true, 4).getint();
+                    valtype vchBlockHash(stacktop(-2));
+                    valtype vchBlockIndex(stacktop(-1));
 
-                    valtype vchHashCheck = stacktop(-2);
+                    if ((vchBlockIndex.size() > sizeof(int)) || (vchBlockHash.size() > 32))
+                    {
+                        LogPrintf("%s: %s: OP_CHECKBLOCKATHEIGHT verification failed. Bad params.", __FILE__, __func__);
+                        return set_error(serror, SCRIPT_ERR_CHECKBLOCKATHEIGHT);
+                    }
+
+                    // nHeight is a 32-bit signed integer field.
+                    const int32_t nHeight = CScriptNum(vchBlockIndex, true, 4).getint();
 
                     // Compare the specified block hash with the input.
-                    if (!checker.CheckBlockHash(nHeight, vchHashCheck)) {
+                    if (nHeight < 0 || !checker.CheckBlockHash(nHeight, vchBlockHash)) {
                         // Not final rather than a hard reject to avoid caching across different blockchains
                         // Also because it will *eventually* become final when the height gets old enough
+                        LogPrintf("%s: %s: OP_CHECKBLOCKATHEIGHT verification failed. Referenced height: %d", __FILE__, __func__, nHeight);
                         return set_error(serror, SCRIPT_ERR_NOT_FINAL);
                     }
 
@@ -1244,6 +1217,11 @@ bool TransactionSignatureChecker::CheckBlockHash(const int32_t nHeight, const st
     CBlockIndex* pblockindex = (*chain)[nHeight];
     std::vector<unsigned char> vchBlockHash(pblockindex->GetBlockHash().begin(), pblockindex->GetBlockHash().end());
     vchBlockHash.erase(vchBlockHash.begin(), vchBlockHash.end() - vchCompareTo.size());
+
+    if (vchBlockHash.empty() || vchCompareTo.empty()) {
+        return false;
+    }
+
     return (vchCompareTo == vchBlockHash);
 }
 
