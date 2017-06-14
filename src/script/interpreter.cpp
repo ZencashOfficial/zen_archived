@@ -14,6 +14,7 @@
 #include "pubkey.h"
 #include "script/script.h"
 #include "uint256.h"
+#include "util.h"
 
 #include "main.h"
 #include <boost/algorithm/hex.hpp>
@@ -224,6 +225,7 @@ bool CheckBlockHash(uint256 &txBlockHash, uint256 &blockHash)
     if (txBlockHash == blockHash)
         return true;
 
+    LogPrintf("%s: %s: OP_CHECKBLOCKATHEIGHT verification failed. Parameters don't match active chain.", __FILE__, __func__);
     return false;
 }
 
@@ -423,6 +425,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                     if (!(flags & SCRIPT_VERIFY_CHECKBLOCKATHEIGHT)) {
                         // At least check that there are 2 parameters
                         if (stack.size() < 2) {
+                            LogPrintf("%s: %s: OP_CHECKBLOCKATHEIGHT verification failed. Wrong parameters amount.", __FILE__, __func__);
                             return set_error(serror, SCRIPT_ERR_INVALID_STACK_OPERATION);
                         }
                         // Clear stack
@@ -432,6 +435,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                     }
 
                     if (stack.size() < 2) {
+                        LogPrintf("%s: %s: OP_CHECKBLOCKATHEIGHT verification failed. Wrong parameters amount.", __FILE__, __func__);
                         return set_error(serror, SCRIPT_ERR_INVALID_STACK_OPERATION);
                     }
 
