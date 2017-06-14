@@ -160,7 +160,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
             else if (opcode2 == OP_SMALLDATA)
             {
             	// Possible values of OP_CHECKBLOCKATHEIGHT parameters
-            	if (vch1.size() == 2)
+            	if (vch1.size() < 4)
 					vchBlockHeight = vch1;
 				else
 					vchBlockHash = vch1;
@@ -179,7 +179,10 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
 
                 // If the chain doesn't reach the desired height yet, the transaction is non-final
                 if (nHeight > chainActive.Height())
-                	break;
+                {
+                    LogPrintf("%s: %s: OP_CHECKBLOCKATHEIGHT verification failed. vout block height %d is ahead of chainActive", __FILE__, __func__, nHeight);
+                    break;
+                }
 
                 // According to BIP115, sufficiently old blocks are always valid, so check only blocks of depth less than 52596
                 if (nHeight > (chainActive.Height() - 52596))
@@ -190,7 +193,10 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
 					vchCompareTo.erase(vchCompareTo.begin(), vchCompareTo.end() - vchBlockHash.size());
 
 					if (vchCompareTo != vchBlockHash)
-						break;
+                    {
+                        LogPrintf("%s: %s: OP_CHECKBLOCKATHEIGHT verification failed. vout block height: %d", __FILE__, __func__, nHeight);
+                        break;
+                    }
                 }
 #endif
                 if (opcode1 != opcode2 || vch1 != vch2)
