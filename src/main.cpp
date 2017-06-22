@@ -1650,6 +1650,25 @@ int GetSpendHeight(const CCoinsViewCache& inputs)
     return pindexPrev->nHeight + 1;
 }
 
+bool ContainsFoundersReward (const CCoins *coins)
+{
+    if(coins->IsCoinBase())
+    {
+        if (coins->nHeight > Params().GetConsensus().nChainsplitIndex)
+        {
+            if (coins->vout.size() == 2) // depends on format of coinbase tx. For now it has 2 vouts (miner reward and FR)
+            {
+                // Founder script (address) expected on the height of current tx (height of block to which this tx was included)
+                std::string founderScriptPubKey = Params().GetFoundersRewardScriptAtHeight(coins->nHeight).ToString();
+
+                if (coins->vout[1].scriptPubKey.ToString() == founderScriptPubKey)
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
 namespace Consensus {
 bool CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight, const Consensus::Params& consensusParams)
 {
@@ -1670,7 +1689,7 @@ bool CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoins
             const CCoins *coins = inputs.AccessCoins(prevout.hash);
             assert(coins);
 
-            if (coins->IsCoinBase()) {
+            if (coins->IsCoinBase() && !ContainsFoundersReward(coins)) {
                 // Ensure that coinbases are matured
                 if (nSpendHeight - coins->nHeight < COINBASE_MATURITY) {
                     return state.Invalid(
