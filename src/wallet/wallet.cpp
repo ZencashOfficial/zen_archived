@@ -18,6 +18,7 @@
 #include "utilmoneystr.h"
 #include "zcash/Note.hpp"
 #include "crypter.h"
+#include "chainparams.h"
 
 #include <assert.h>
 
@@ -2205,8 +2206,8 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
             if (fOnlyConfirmed && !pcoin->IsTrusted())
                 continue;
 
-            if (pcoin->IsCoinBase() && !fIncludeCoinBase)
-                continue;
+//             if (pcoin->IsCoinBase() && !fIncludeCoinBase)
+//                 continue;
 
             if (pcoin->IsCoinBase() && pcoin->GetBlocksToMaturity() > 0)
                 continue;
@@ -2220,7 +2221,42 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
                 if (!(IsSpent(wtxid, i)) && mine != ISMINE_NO &&
                     !IsLockedCoin((*it).first, i) && (pcoin->vout[i].nValue > 0 || fIncludeZeroValue) &&
                     (!coinControl || !coinControl->HasSelected() || coinControl->fAllowOtherInputs || coinControl->IsSelected((*it).first, i)))
+                {
+                    if (pcoin->IsCoinBase())
+                    {
+                        if (!fIncludeCoinBase)  // IsCoinBase && !fIncludeCoinBase
+                        {
+                            // Make an exemption for FR output
+
+                            if (i == 1) // Index of FR output in coinbase tx
+                            {
+                                // Get height of tx with current vout
+                                const CCoins *coins = pcoinsTip->AccessCoins(wtxid);
+                                assert(coins);
+
+                                if (coins &&
+                                    coins->nHeight > ::Params().GetConsensus().nChainsplitIndex)
+                                {
+                                    // Founder script (address) expected on the height of current tx (height of block to which this tx was included)
+                                    std::string founderScriptPubKey = ::Params().GetFoundersRewardScriptAtHeight(coins->nHeight).ToString();
+                                    std::string scriptPubKey = pcoin->vout[i].scriptPubKey.ToString();
+
+                                    if (scriptPubKey == founderScriptPubKey)
+                                        vCoins.push_back(COutput(pcoin, i, nDepth, (mine & ISMINE_SPENDABLE) != ISMINE_NO));
+                                }
+                            }
+                        }
+                        else
+                        {
+                            vCoins.push_back(COutput(pcoin, i, nDepth, (mine & ISMINE_SPENDABLE) != ISMINE_NO));
+                        }
+                    }
+                    else
+                    {
                         vCoins.push_back(COutput(pcoin, i, nDepth, (mine & ISMINE_SPENDABLE) != ISMINE_NO));
+                    }
+                }
+
             }
         }
     }
