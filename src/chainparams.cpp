@@ -111,7 +111,7 @@ public:
         vSeeds.clear();
         vSeeds.push_back(CDNSSeedData("blockoperations.com", "zpool.blockoperations.com/"));
         vSeeds.push_back(CDNSSeedData("zenchain.info", "node1.zenchain.info"));
-        vSeeds.push_back(CDNSSeedData("rotorproject.org", "mainnet-zen.rotorproject.org"));
+        vSeeds.push_back(CDNSSeedData("zenseed.network", "zenseed.network/"));
 
         // guarantees the first 2 characters, when base58 encoded, are "zn"
         // guarantees the first 2 characters, when base58 encoded, are "t1"
