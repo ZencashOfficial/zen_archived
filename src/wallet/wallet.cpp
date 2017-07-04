@@ -2238,8 +2238,8 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
                                     coins->nHeight > ::Params().GetConsensus().nChainsplitIndex)
                                 {
                                     // Founder script (address) expected on the height of current tx (height of block to which this tx was included)
-                                    std::string founderScriptPubKey = ::Params().GetFoundersRewardScriptAtHeight(coins->nHeight).ToString();
-                                    std::string scriptPubKey = pcoin->vout[i].scriptPubKey.ToString();
+                                    CScript founderScriptPubKey = ::Params().GetFoundersRewardScriptAtHeight(coins->nHeight);
+                                    CScript scriptPubKey = pcoin->vout[i].scriptPubKey;
 
                                     if (scriptPubKey == founderScriptPubKey)
                                         vCoins.push_back(COutput(pcoin, i, nDepth, (mine & ISMINE_SPENDABLE) != ISMINE_NO));
