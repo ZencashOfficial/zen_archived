@@ -1652,7 +1652,8 @@ int GetSpendHeight(const CCoinsViewCache& inputs)
 
 bool IsFoundersReward(const CCoins *coins, int nIn)
 {
-    if(coins->IsCoinBase() &&
+    if(coins != NULL &&
+       coins->IsCoinBase() &&
        coins->nHeight > Params().GetConsensus().nChainsplitIndex &&
        coins->vout.size() > nIn)
     {

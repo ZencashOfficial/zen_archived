@@ -2189,7 +2189,7 @@ CAmount CWallet::GetImmatureWatchOnlyBalance() const
 /**
  * populate vCoins with vector of available COutputs.
  */
-void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const CCoinControl *coinControl, bool fIncludeZeroValue, bool fIncludeCoinBase) const
+void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const CCoinControl *coinControl, bool fIncludeZeroValue, bool fIncludeCoinBase, bool fIncludeFoundersReward) const
 {
     vCoins.clear();
 
@@ -2206,8 +2206,8 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
             if (fOnlyConfirmed && !pcoin->IsTrusted())
                 continue;
 
-//             if (pcoin->IsCoinBase() && !fIncludeCoinBase)
-//                 continue;
+             if (pcoin->IsCoinBase() && !fIncludeCoinBase && !fIncludeFoundersReward)
+                 continue;
 
             if (pcoin->IsCoinBase() && pcoin->GetBlocksToMaturity() > 0)
                 continue;
@@ -2216,6 +2216,7 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
             if (nDepth < 0)
                 continue;
 
+            const CCoins *coins = pcoinsTip->AccessCoins(wtxid);
             for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
                 isminetype mine = IsMine(pcoin->vout[i]);
                 if (!(IsSpent(wtxid, i)) && mine != ISMINE_NO &&
@@ -2224,37 +2225,14 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
                 {
                     if (pcoin->IsCoinBase())
                     {
-                        if (!fIncludeCoinBase)  // IsCoinBase && !fIncludeCoinBase
-                        {
-                            // Make an exemption for FR output
-
-                            if (i == 1) // Index of FR output in coinbase tx
-                            {
-                                // Get height of tx with current vout
-                                const CCoins *coins = pcoinsTip->AccessCoins(wtxid);
-                                assert(coins);
-
-                                if (coins &&
-                                    coins->nHeight > ::Params().GetConsensus().nChainsplitIndex)
-                                {
-                                    // Founder script (address) expected on the height of current tx (height of block to which this tx was included)
-                                    CScript founderScriptPubKey = ::Params().GetFoundersRewardScriptAtHeight(coins->nHeight);
-                                    CScript scriptPubKey = pcoin->vout[i].scriptPubKey;
-
-                                    if (scriptPubKey == founderScriptPubKey)
-                                        vCoins.push_back(COutput(pcoin, i, nDepth, (mine & ISMINE_SPENDABLE) != ISMINE_NO));
-                                }
-                            }
-                        }
-                        else
-                        {
-                            vCoins.push_back(COutput(pcoin, i, nDepth, (mine & ISMINE_SPENDABLE) != ISMINE_NO));
-                        }
+                        bool isFoudersReward = IsFoundersReward(coins, i);
+                        if (!fIncludeFoundersReward && isFoudersReward)
+                            continue;
+                        if (!fIncludeCoinBase && !isFoudersReward)
+                            continue;
                     }
-                    else
-                    {
-                        vCoins.push_back(COutput(pcoin, i, nDepth, (mine & ISMINE_SPENDABLE) != ISMINE_NO));
-                    }
+
+                    vCoins.push_back(COutput(pcoin, i, nDepth, (mine & ISMINE_SPENDABLE) != ISMINE_NO));
                 }
 
             }
@@ -2411,20 +2389,22 @@ bool CWallet::SelectCoinsMinConf(const CAmount& nTargetValue, int nConfMine, int
 
 bool CWallet::SelectCoins(const CAmount& nTargetValue, set<pair<const CWalletTx*,unsigned int> >& setCoinsRet, CAmount& nValueRet,  bool& fOnlyCoinbaseCoinsRet, bool& fNeedCoinbaseCoinsRet, const CCoinControl* coinControl) const
 {
-    // Output parameter fOnlyCoinbaseCoinsRet is set to true when the only available coins are coinbase utxos.
-    vector<COutput> vCoinsNoCoinbase, vCoinsWithCoinbase;
-    AvailableCoins(vCoinsNoCoinbase, true, coinControl, false, false);
-    AvailableCoins(vCoinsWithCoinbase, true, coinControl, false, true);
-    fOnlyCoinbaseCoinsRet = vCoinsNoCoinbase.size() == 0 && vCoinsWithCoinbase.size() > 0;
-
     // If coinbase utxos can only be sent to zaddrs, exclude any coinbase utxos from coin selection.
     bool fProtectCoinbase = Params().GetConsensus().fCoinbaseMustBeProtected;
-    vector<COutput> vCoins = (fProtectCoinbase) ? vCoinsNoCoinbase : vCoinsWithCoinbase;
+    bool fProtectFRCoinbase = fProtectCoinbase && !Params().GetConsensus().fDisableCoinbaseProtectionForFoundersReward;
+
+    // Output parameter fOnlyCoinbaseCoinsRet is set to true when the only available coins are coinbase utxos.
+    vector<COutput> vCoinsWithoutProtection, vCoinsWithProtection;
+    AvailableCoins(vCoinsWithoutProtection, true, coinControl, false, false, !fProtectFRCoinbase);
+    AvailableCoins(vCoinsWithProtection, true, coinControl, false, true, true);
+    fOnlyCoinbaseCoinsRet = vCoinsWithoutProtection.size() == 0 && vCoinsWithProtection.size() > 0;
+
+    vector<COutput> vCoins = (fProtectCoinbase) ? vCoinsWithoutProtection : vCoinsWithProtection;
 
     // Output parameter fNeedCoinbaseCoinsRet is set to true if coinbase utxos need to be spent to meet target amount
-    if (fProtectCoinbase && vCoinsWithCoinbase.size() > vCoinsNoCoinbase.size()) {
+    if (fProtectCoinbase && vCoinsWithProtection.size() > vCoinsWithoutProtection.size()) {
         CAmount value = 0;
-        for (const COutput& out : vCoinsNoCoinbase) {
+        for (const COutput& out : vCoinsWithoutProtection) {
             if (!out.fSpendable) {
                 continue;
             }
@@ -2432,7 +2412,7 @@ bool CWallet::SelectCoins(const CAmount& nTargetValue, set<pair<const CWalletTx*
         }
         if (value <= nTargetValue) {
             CAmount valueWithCoinbase = 0;
-            for (const COutput& out : vCoinsWithCoinbase) {
+            for (const COutput& out : vCoinsWithProtection) {
                 if (!out.fSpendable) {
                     continue;
                 }
