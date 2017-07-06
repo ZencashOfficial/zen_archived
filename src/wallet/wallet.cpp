@@ -2401,17 +2401,17 @@ bool CWallet::SelectCoins(const CAmount& nTargetValue, set<pair<const CWalletTx*
     bool fProtectFRCoinbase = fProtectCoinbase && !Params().GetConsensus().fDisableCoinbaseProtectionForFoundersReward;
 
     // Output parameter fOnlyCoinbaseCoinsRet is set to true when the only available coins are coinbase utxos.
-    vector<COutput> vCoinsWithoutProtection, vCoinsWithProtection;
-    AvailableCoins(vCoinsWithoutProtection, true, coinControl, false, false, !fProtectFRCoinbase);
-    AvailableCoins(vCoinsWithProtection, true, coinControl, false, true, true);
-    fOnlyCoinbaseCoinsRet = vCoinsWithoutProtection.size() == 0 && vCoinsWithProtection.size() > 0;
+    vector<COutput> vCoinsNoProtectedCoinbase, vCoinsWithProtectedCoinbase;
+    AvailableCoins(vCoinsNoProtectedCoinbase, true, coinControl, false, false, !fProtectFRCoinbase);
+    AvailableCoins(vCoinsWithProtectedCoinbase, true, coinControl, false, true, true);
+    fOnlyCoinbaseCoinsRet = vCoinsNoProtectedCoinbase.size() == 0 && vCoinsWithProtectedCoinbase.size() > 0;
 
-    vector<COutput> vCoins = (fProtectCoinbase) ? vCoinsWithoutProtection : vCoinsWithProtection;
+    vector<COutput> vCoins = (fProtectCoinbase) ? vCoinsNoProtectedCoinbase : vCoinsWithProtectedCoinbase;
 
     // Output parameter fNeedCoinbaseCoinsRet is set to true if coinbase utxos need to be spent to meet target amount
-    if (fProtectCoinbase && vCoinsWithProtection.size() > vCoinsWithoutProtection.size()) {
+    if (fProtectCoinbase && vCoinsWithProtectedCoinbase.size() > vCoinsNoProtectedCoinbase.size()) {
         CAmount value = 0;
-        for (const COutput& out : vCoinsWithoutProtection) {
+        for (const COutput& out : vCoinsNoProtectedCoinbase) {
             if (!out.fSpendable) {
                 continue;
             }
@@ -2419,7 +2419,7 @@ bool CWallet::SelectCoins(const CAmount& nTargetValue, set<pair<const CWalletTx*
         }
         if (value <= nTargetValue) {
             CAmount valueWithCoinbase = 0;
-            for (const COutput& out : vCoinsWithProtection) {
+            for (const COutput& out : vCoinsWithProtectedCoinbase) {
                 if (!out.fSpendable) {
                     continue;
                 }
