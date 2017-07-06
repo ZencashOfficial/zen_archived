@@ -1693,15 +1693,22 @@ bool CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoins
                         REJECT_INVALID, "bad-txns-premature-spend-of-coinbase");
                 }
 
-                // Ensure that coinbases cannot be spent to transparent outputs (except coinbase founders reward)
+                // Ensure that coinbases cannot be spent to transparent outputs
                 // Disabled on regtest
                 if (fCoinbaseEnforcedProtectionEnabled &&
                     consensusParams.fCoinbaseMustBeProtected &&
-                    !IsFoundersReward(coins, prevout.n) &&
                     !tx.vout.empty()) {
-                    return state.Invalid(
-                        error("CheckInputs(): tried to spend coinbase with transparent outputs"),
-                        REJECT_INVALID, "bad-txns-coinbase-spend-has-transparent-outputs");
+
+                    // Since HARD_FORK_HEIGHT there is an exemption for founders reward coinbase coins, so it is allowed
+                    // to send them to the transparent addr.
+                    const int HARD_FORK_HEIGHT = INT_MAX; // TODO: change to the real height of the HF
+                    bool fDisableProtectionForFR = consensusParams.fDisableCoinbaseProtectionForFoundersReward
+                                                   && HARD_FORK_HEIGHT <= nSpendHeight;
+                    if (!fDisableProtectionForFR || !IsFoundersReward(coins, prevout.n)) {
+                        return state.Invalid(
+                                error("CheckInputs(): tried to spend coinbase with transparent outputs"),
+                                REJECT_INVALID, "bad-txns-coinbase-spend-has-transparent-outputs");
+                    }
                 }
             }
 
