@@ -2216,7 +2216,6 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
             if (nDepth < 0)
                 continue;
 
-            const CCoins *coins = pcoinsTip->AccessCoins(wtxid);
             for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
                 isminetype mine = IsMine(pcoin->vout[i]);
                 if (!(IsSpent(wtxid, i)) && mine != ISMINE_NO &&
@@ -2225,11 +2224,19 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
                 {
                     if (pcoin->IsCoinBase())
                     {
-                        bool isFoudersReward = IsFoundersReward(coins, i);
-                        if (!fIncludeFoundersReward && isFoudersReward)
-                            continue;
-                        if (!fIncludeCoinBase && !isFoudersReward)
-                            continue;
+                        const CCoins *coins = pcoinsTip->AccessCoins(wtxid);
+                        assert(coins);
+
+                        if (IsFoundersReward(coins, i))
+                        {
+                            if(!fIncludeFoundersReward)
+                                continue;
+                        }
+                        else
+                        {
+                            if(!fIncludeCoinBase)
+                                continue;
+                        }
                     }
 
                     vCoins.push_back(COutput(pcoin, i, nDepth, (mine & ISMINE_SPENDABLE) != ISMINE_NO));
