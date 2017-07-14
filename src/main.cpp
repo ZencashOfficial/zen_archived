@@ -674,21 +674,8 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
             reason = "scriptpubkey";
             return false;
         }
-
-        int nHeight = chainActive.Height();
-        // provide temporary replay protection for two minerconf windows during chainsplit
-        // TODO: do we really need this check here?
-        if ((whichType != TX_PUBKEY_REPLAY &&
-             whichType != TX_PUBKEYHASH_REPLAY &&
-             whichType != TX_MULTISIG_REPLAY &&
-             whichType != TX_SCRIPTHASH_REPLAY) &&
-             nHeight > Params().GetConsensus().nChainsplitIndex &&
-            !tx.IsCoinBase())
-        {
-            reason = "op-checkblockatheight-needed";
-            return false;
-        }
-        else if (whichType == TX_NULL_DATA)
+        
+        if (whichType == TX_NULL_DATA)
             nDataOut++;
         else if ((whichType == TX_MULTISIG) && (!fIsBareMultisigStd)) {
             reason = "bare-multisig";
@@ -874,10 +861,10 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state,
         txnouttype whichType;
         ::IsStandard(txout.scriptPubKey, whichType);
 
-        if ((whichType != TX_PUBKEY_REPLAY &&
-             whichType != TX_PUBKEYHASH_REPLAY &&
-             whichType != TX_MULTISIG_REPLAY &&
-             whichType != TX_SCRIPTHASH_REPLAY) &&
+        if ((whichType == TX_PUBKEY ||
+             whichType == TX_PUBKEYHASH ||
+             whichType == TX_MULTISIG ||
+             whichType == TX_SCRIPTHASH) &&
              chainActive.Height() > Params().GetConsensus().sfReplayProtectionHeight &&
              !tx.IsCoinBase())
         {
