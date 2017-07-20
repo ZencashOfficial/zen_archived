@@ -876,6 +876,11 @@ extern CBlockTreeDB *pblocktree;
  */
 int GetSpendHeight(const CCoinsViewCache& inputs);
 
+/**
+ * Check if the output nIn in the coins is Founders Reward
+ */
+bool IsFoundersReward(const CCoins *coins, int nIn);
+
 extern VersionBitsCache versionbitscache;
 
 /**
