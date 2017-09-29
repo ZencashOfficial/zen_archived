@@ -1,6 +1,8 @@
 Zen 2.0.10
 ==============
 
+[![Join the chat at https://gitter.im/ZencashOfficial/zen](https://badges.gitter.im/ZencashOfficial/zen.svg)](https://gitter.im/ZencashOfficial/zen?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 What is Zen?
 ----------------
 A globally accessible and anonymous blockchain for censorship-resistant communications and economic activity.
