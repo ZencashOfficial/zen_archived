@@ -2386,6 +2386,7 @@ UniValue listunspent(const UniValue& params, bool fHelp)
             "    \"scriptPubKey\" : \"key\", (string) the script key\n"
             "    \"amount\" : x.xxx,         (numeric) the transaction amount in btc\n"
             "    \"confirmations\" : n       (numeric) The number of confirmations\n"
+            "    \"coinbase\" : n            (string) if the transaction was a coinbase\n"
             "  }\n"
             "  ,...\n"
             "]\n"
@@ -2462,6 +2463,7 @@ UniValue listunspent(const UniValue& params, bool fHelp)
         entry.push_back(Pair("amount",ValueFromAmount(nValue)));
         entry.push_back(Pair("confirmations",out.nDepth));
         entry.push_back(Pair("spendable", out.fSpendable));
+        entry.push_back(Pair("coinbase", out.tx->IsCoinBase()));
         results.push_back(entry);
     }
 
