@@ -34,6 +34,13 @@ A globally accessible and anonymous blockchain for censorship-resistant communic
         autoconf libtool ncurses-dev unzip git python \
         zlib1g-dev wget bsdmainutils automake
     ```
+    5. Mac OS X
+    
+    Install [Homebrew](https://brew.sh) and latest Xcode from iTunes 
+    ```{r, engine='bash'}
+    brew tap discoteq/discoteq; brew install flock autoconf autogen automake gcc5 \
+        binutils protobuf coreutils wget
+    ```
 
 * Install for linux
 ```{r, engine='bash'}
@@ -66,6 +73,21 @@ PATH=$PATH:~/bin
 cd ~/zen/
 ./zcutil/build-arm.sh --disable-rust -j$(nproc)
 ```
+
+* Install for Mac
+```{r, engine='bash'}
+# Build
+./zcutil/build-mac.sh
+# Configure 
+mkdir -p ~/Library/Application\ Support/Zen
+echo "rpcuser=username" >> ~/Library/Application\ Support/Zen/zen.conf
+echo "rpcpassword=`head -c 32 /dev/urandom | base64`" >> ~/Library/Application\ Support/Zen/zen.conf
+# fetch key
+./zcutil/fetch-params.sh
+# Run
+./src/zend
+```
+
 Instructions to redeem pre block 110,000 ZCL
 -------------
 1. Linux:
