@@ -172,7 +172,7 @@ void ConnectMetricsScreen()
 int printStats(bool mining)
 {
     // Number of lines that are always displayed
-    int lines = 4;
+    int lines = 5;
 
     int height = chainActive.Height();
     int64_t netsolps = GetNetworkHashPS(120, -1);
@@ -183,6 +183,7 @@ int printStats(bool mining)
         connections = vNodes.size();
         tlsConnections = std::count_if(vNodes.begin(), vNodes.end(), [](CNode* n) {return n->ssl != NULL;});
     }
+    unsigned long mempool_count = mempool.size();
 /*
     // OpenSSL related statistics
     tlsvalidate = GetArg("-tlsvalidate","");
@@ -229,6 +230,7 @@ int printStats(bool mining)
         std::cout << "    " << _("Local solution rate") << " | " << strprintf("%.4f Sol/s", localsolps) << std::endl;
         lines++;
     }
+    std::cout << "       " << _("Mempool TX count") << " | " << mempool_count << " TX" << std::endl;
     std::cout << std::endl;
 
     return lines;
