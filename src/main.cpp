@@ -682,6 +682,7 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
         // TODO: do we really need this check here?
         if ((whichType != TX_PUBKEY_REPLAY &&
              whichType != TX_PUBKEYHASH_REPLAY &&
+             whichType != TX_NULL_DATA_REPLAY &&
              whichType != TX_MULTISIG_REPLAY &&
              whichType != TX_SCRIPTHASH_REPLAY) &&
              nHeight > Params().GetConsensus().nChainsplitIndex &&
@@ -878,6 +879,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state,
 
         if ((whichType != TX_PUBKEY_REPLAY &&
              whichType != TX_PUBKEYHASH_REPLAY &&
+             whichType != TX_NULL_DATA_REPLAY &&
              whichType != TX_MULTISIG_REPLAY &&
              whichType != TX_SCRIPTHASH_REPLAY) &&
              chainActive.Height() > Params().GetConsensus().sfReplayProtectionHeight &&
